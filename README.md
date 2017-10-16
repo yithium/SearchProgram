@@ -11,7 +11,7 @@ User will input search actions provided base on the Data file they chosed to loa
 * searchClosest function added
 
 # Things needed to be done
-* Enable program to work with CLI(command line interface)
+* Fix program to work with CLI(command line interface)
 * Create additional test data
 * Revamp program design
 * Adopt return value optimization
