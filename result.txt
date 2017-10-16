@@ -1,0 +1,10 @@
+Loading from: output1.dat
+successfully loaded
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+Row 0: 41 467 334 0 169 224 478 358 462 464 
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+'searchSequence 41 44' is not found in any row.
+Row 3: 447 226 271 38 369 412 167 299 35 394 
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+'searchUnordered 327 327 327' is not found in any row.
+Row 3: 447 226 271 38 369 412 167 299 35 394 
