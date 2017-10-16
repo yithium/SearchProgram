@@ -1,7 +1,7 @@
-echo test
-echo test1
-echo test2
-echo test3
-echo test4
-echo "SearchSequence 38"
-echo exit
+SearchSequence 82 429 41
+SearchSequence 41
+SearchSequence 41 44
+SearchUnordered 38
+SearchUnordered 327 327 327
+SearchClosest 38
+exit

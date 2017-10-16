@@ -21,7 +21,6 @@ std::vector<std::string> splitString(const std::string& input, std::string delim
 	{
 		ePos = input.find(delimiter,sPos);
 		result.push_back(ePos == std::string::npos ? input.substr(sPos) : input.substr(sPos,ePos - sPos));
-		//std::cout << "s:" << sPos << ", e:" <<ePos << "::" << result.back().size() << "\n\n";
 		sPos = ePos + delimiter.length();
 	}
 	if(result.back().size() == 0)
@@ -124,12 +123,9 @@ bool SearchClass::Load(std::string input)
 		
 		
 		fileData = crypto.Decrypt(fileData);
-		std::cout << fileData << ":end" << std::endl;
-		std::cout << "splitString" << std::endl;
 		std::vector<std::string> vecStr = splitString(fileData);
 		std::vector<std::vector<int> > data2D;
 		data2D.reserve(ASSUMESIZE);
-		std::cout << "splitInt" << std::endl;
 		for(size_t idx = 0; idx < vecStr.size(); ++idx)
 		{
 			data2D.push_back(splitStringInt(vecStr[idx]));
@@ -157,7 +153,7 @@ bool SearchClass::Load(const std::vector<std::vector<int> >& input)
 			);
 		}
 	}
-	std::cout << (result ? "Success":"Fail") << " container Size is now R: " << _container.GetRowSize() << ", C: " << _container.GetColSize() << std::endl;
+	//std::cout << (result ? "Success":"Fail") << " container Size is now R: " << _container.GetRowSize() << ", C: " << _container.GetColSize() << std::endl;
 	return result;
 }
 
@@ -254,26 +250,26 @@ void SearchClass::SearchClosest(const std::vector<int>& target)
 		PrintRow(rowIdx);
 	}
 }
-bool SearchClass::SearchClosest(const std::string& target)
+void SearchClass::SearchClosest(const std::string& target)
 {
-	return SearchClosest(splitStringInt(target));
+	SearchClosest(splitStringInt(target));
 }
 
 bool SearchClass::ExecuteCommand(const std::string& target)
 {
 	size_t splitter = target.find(" ");
 	std::string command = target.substr(0,splitter);
-	std::cout << command << "::\n";
-	std::cout << target.substr(splitter+1) << "::data::\n";
 	if(command == "searchSequence")
 	{
-		SearchSequence(target.substr(splitter+1));
+		return SearchSequence(target.substr(splitter+1));
 	}
-	else if(command == )
-	}
-	}
-	else if(command == )
+	else if(command == "searchUnordered")
 	{
+		return SearchUnordered(target.substr(splitter+1));
+	}
+	else if(command == "searchClosest")
+	{
+		SearchClosest(target.substr(splitter+1));
 	}
 	return false;
 }

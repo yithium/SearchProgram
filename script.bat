@@ -1,2 +1,2 @@
 make searchProgram
-autoTest.bat
+./autoTest.bat
