@@ -1,62 +1,86 @@
-#include "SearchCLass.h"
-#include "Cryptography.h"
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <vector>
-#include <sstream>
-//const std::string KEY ("unlock");
+#include "SearchCLass.h"   // SearchClass declaration
+#include "Cryptography.h"  // Encryption/Decryption operation
+#include <iostream>        // std::cout for printing operation results
+#include <fstream>         // for reading data file
+#include <algorithm>       // sort
+#include <vector>          // container
+#include <sstream>         // getline from string streams
 
-#define KEY "unlock"
-#define BUFFERSIZE 1000
-#define ASSUMESIZE 10
 
+
+#define KEY "unlock"       // encryption/decryption key
+#define BUFFERSIZE 1000    // assumed buffer size
+#define ASSUMESIZE 10      // defaulted vector reserve size, to reduce number of allocation due to no reserve
+
+
+/***************************/
+/*** Help functions Begin***/
+/***************************/
+
+// splitting a string by newlines or delimiter string
+// for splitting input data into their respective rows
 std::vector<std::string> splitString(const std::string& input, std::string delimiter = "\n")
 {
 	std::vector<std::string> result;
 	result.reserve(ASSUMESIZE);
+	
 	size_t sPos = 0;
 	size_t ePos = 0;
+	
+	// split until end of string
 	while(ePos != std::string::npos)
 	{
+		// search for end point of first string
 		ePos = input.find(delimiter,sPos);
-		result.push_back(ePos == std::string::npos ? input.substr(sPos) : input.substr(sPos,ePos - sPos));
-		sPos = ePos + delimiter.length();
+		// push string to be split into result vector
+		result.push_back(
+			ePos == std::string::npos          //
+				? input.substr(sPos)             // push back remaining string if reached end of string
+				: input.substr(sPos,ePos - sPos) // push back sub string found
+		);
+		
+		sPos = ePos + delimiter.length();    // update start position to after delimiter found
 	}
+	
+	// remove empty string created by potential different input string format
 	if(result.back().size() == 0)
 		result.pop_back();
+
+	// return split result
 	return result;
 }
 
-std::vector<int> splitStringInt(const std::string& input)
+// split string into int
+std::vector<int> splitStringData(const std::string& input)
 {
 	std::vector<int> result;
 	result.reserve(ASSUMESIZE);
 	
+	// create string stream to utilize stl
 	std::istringstream isstream(input);
 	
 	int val = 0;
+	// get first value from string
 	if(isstream.good())
 	{
 		isstream >> val;
 	}
+	// get all valid data from string
 	while(isstream.good())
 	{
+		// push previously obtained valid data into vector
 		result.push_back(val);
+		// get data for next iteration
 		isstream >> val;
 	}
+	
 	return result;
 }
 
-bool pairCompare(std::pair<int,size_t> lhs, std::pair<int,size_t> rhs)
-{
-	return lhs.first < rhs.first;
-}
-
+// returns sorted element value and counts from unsorted data vector
 std::vector<std::pair<int, size_t> > countElem(std::vector<int> input)
 {
 	std::vector<std::pair<int, size_t> > result;
-	
 	result.reserve(input.size());
 	
 	std::sort(input.begin(), 
@@ -66,12 +90,15 @@ std::vector<std::pair<int, size_t> > countElem(std::vector<int> input)
 	// combine sorted data
 	int curElem = input[0];
 	size_t count = 0;
+	// count number of each elements and push into result when element is different from previous
 	for(size_t elem = 0; elem < input.size(); ++elem)
 	{
+		// increase count if same element
 		if(curElem == input[elem])
 		{
 			++count;
 		}
+		// push if different element and initialize value for next element
 		else if (curElem != input[elem])
 		{
 			result.push_back(std::pair<int, size_t>(curElem,count));
@@ -79,10 +106,17 @@ std::vector<std::pair<int, size_t> > countElem(std::vector<int> input)
 			count = 1;
 		}
 	}
+	// push the last element counts that has not been pushed
 	result.push_back(std::pair<int, size_t>(curElem,count));
 	return result;
 }
 
+/***************************/
+/**** Help functions End****/
+/***************************/
+
+
+// for printing rows
 void SearchClass::PrintRow(size_t idx)
 {
 	std::cout << "Row "<< idx << ": ";
@@ -93,44 +127,52 @@ void SearchClass::PrintRow(size_t idx)
 	std::cout << std::endl;
 }
 
+// constructor
 SearchClass::SearchClass()
 {
 }
 
+// load from data from file
 bool SearchClass::Load(std::string input)
 {
+	// opening file
 	std::ifstream fileStream(input.c_str(), std::ios::binary);
 	Cryptography crypto(KEY);
 	bool result = false;
+	// read data if file opened successfully
 	if(fileStream.good())
 	{
+		// get data size
 		fileStream.seekg (0, fileStream.end);
 		int length = fileStream.tellg();
 		fileStream.seekg (0, fileStream.beg);
 		
 		std::string fileData;
+		// read data into string using buffer of BUFFERSIZE 
 		while(length > 0 && fileStream.good())
 		{
 			char buffer[BUFFERSIZE] = {0};
 			int readSize = length > BUFFERSIZE ? BUFFERSIZE:length;
 			
 			fileStream.read(buffer, readSize);
-			fileData.append(buffer);
+			fileData.append(buffer,readSize);
 			
 			length -= readSize;
 		}
 		fileStream.close();
 		
-		
+		// decrypt data
 		fileData = crypto.Decrypt(fileData);
+		// split into data into rows
 		std::vector<std::string> vecStr = splitString(fileData);
+		// split data rows into elements
 		std::vector<std::vector<int> > data2D;
 		data2D.reserve(ASSUMESIZE);
 		for(size_t idx = 0; idx < vecStr.size(); ++idx)
 		{
-			data2D.push_back(splitStringInt(vecStr[idx]));
+			data2D.push_back(splitStringData(vecStr[idx]));
 		}
-		
+		// load container using 2d elements data
 		result = Load(data2D);
 		
 		
@@ -138,13 +180,17 @@ bool SearchClass::Load(std::string input)
 	return result;
 }
 
+// load container 2d using 2d vector
 bool SearchClass::Load(const std::vector<std::vector<int> >& input)
 {
+	// verify number of elements in each row is the same
 	bool result = _container.Load(input);
+	// create data for searchUnordered and searchClosest optimization
 	if (result)
 	{
-		_compressSorted.reserve(_container.GetRowSize());
-		for(size_t idx = 0; idx < _container.GetRowSize(); ++idx)
+		_compressSorted.reserve(_container.GetRowNum());
+		// 
+		for(size_t idx = 0; idx < _container.GetRowNum(); ++idx)
 		{
 			_compressSorted.push_back(
 				countElem(
@@ -153,19 +199,21 @@ bool SearchClass::Load(const std::vector<std::vector<int> >& input)
 			);
 		}
 	}
-	//std::cout << (result ? "Success":"Fail") << " container Size is now R: " << _container.GetRowSize() << ", C: " << _container.GetColSize() << std::endl;
+	
 	return result;
 }
 
+// Add row to back of container
 bool SearchClass::AddRow(const std::vector<int>& input)
 {
 	bool result = _container.AddRow(input);
 	if(result)
 	{
+		// create data for searchUnordered and searchClosest optimization
 		_compressSorted.push_back( 
 			countElem( 
 				_container.GetRow(
-					_container.GetRowSize()-1
+					_container.GetRowNum()-1
 				)
 			)
 		);
@@ -173,55 +221,94 @@ bool SearchClass::AddRow(const std::vector<int>& input)
 	return result;
 }
 
+// Verify SearchClass is read for 'Command Execution'
 bool SearchClass::HasData()
 {
 	return !_container.IsEmpty();
 }
 
+// return true if found at least one row that match sequence
 bool SearchClass::SearchSequence(const std::vector<int>& target)
 {
 	bool result = false;
-	if(HasData() && _container.GetColSize() >= target.size())
+	// ensure user did not try to call on invalid data
+	// ends early if number of element exceed size of row
+	if(HasData())
 	{
-		// return first valid
-		for(size_t idx = 0; idx < _container.GetRowSize(); ++idx)
+		if(_container.GetColNum() >= target.size())
 		{
-			if(HasSequence(_container.GetRow(idx), target))
+			// search for sequence in each data rows
+			for(size_t idx = 0; idx < _container.GetRowNum(); ++idx)
 			{
-				PrintRow(idx);
-				result = true;
+				// if sequence exist
+				if(HasSequence(_container.GetRow(idx), target))
+				{
+					// print row and indicate result found
+					PrintRow(idx);
+					result = true;
+				}
 			}
 		}
+		else
+		{
+			std::cout << "Input length greater than data set\n";
+		}
+	}
+	else
+	{
+		std::cout << "No valid data for operation\n";
 	}
 	return result;
 }
+
+// string input to call on vector input
 bool SearchClass::SearchSequence(const std::string& target)
 {
-	return SearchSequence(splitStringInt(target));
+	return SearchSequence(splitStringData(target));
 }
 
-
+// return true if found at least one row that contain all elements unordered
 bool SearchClass::SearchUnordered(const std::vector<int>& target)
 {
 	bool result = false;
-	if(HasData() && _container.GetColSize() >= target.size())
+	// ensure user did not try to call on invalid data
+	// ends early if number of element exceed size of row
+	if(HasData()) 
 	{
-		std::vector<std::pair<int, size_t> > targetCompressed = countElem(target);
-		for(size_t idx = 0; idx < _container.GetRowSize(); ++idx)
+		if(_container.GetColNum() >= target.size())
 		{
-			if(HasUnordered(_compressSorted[idx], targetCompressed))
+			// convert user's input for easier manipulation
+			std::vector<std::pair<int, size_t> > targetCompressed = countElem(target);
+			for(size_t idx = 0; idx < _container.GetRowNum(); ++idx)
 			{
-				PrintRow(idx);
-				result = true;
+				// if all elements exist in row data
+				if(HasUnordered(_compressSorted[idx], targetCompressed))
+				{
+					// print row and indicate result found
+					PrintRow(idx);
+					result = true;
+				}
 			}
 		}
+		else
+		{
+			std::cout << "Input length greater than data set\n";
+		}
+	}
+	else
+	{
+		std::cout << "No valid data for operation\n";
 	}
 	return result;
 }
+
+// string input to call on vector input
 bool SearchClass::SearchUnordered(const std::string& target)
 {
-	return SearchUnordered(splitStringInt(target));
+	return SearchUnordered(splitStringData(target));
 }
+
+// print closest result to user input
 void SearchClass::SearchClosest(const std::vector<int>& target)
 {
 	if(HasData())
@@ -229,15 +316,15 @@ void SearchClass::SearchClosest(const std::vector<int>& target)
 		size_t elements = 0;
 		size_t rowIdx = 0;
 		std::vector<std::pair<int, size_t> > targetCompressed = countElem(target);
-		for(size_t idx = 0; idx < _container.GetRowSize(); ++idx)
+		for(size_t idx = 0; idx < _container.GetRowNum(); ++idx)
 		{
 			// get number of elements existing in the row
 			size_t rowResult = MatchElements(_compressSorted[idx], targetCompressed);
 			if(rowResult == target.size())
 			{
-				// print row that fully matches and end
-				PrintRow(idx);
-				return;
+				// update rowIdx and break from search
+				rowIdx = idx;//PrintRow(idx);
+				break;
 			}
 			else if(rowResult > elements)
 			{
@@ -249,12 +336,19 @@ void SearchClass::SearchClosest(const std::vector<int>& target)
 		//print the best row found
 		PrintRow(rowIdx);
 	}
-}
-void SearchClass::SearchClosest(const std::string& target)
-{
-	SearchClosest(splitStringInt(target));
+	else
+	{
+		std::cout << "No valid data for operation\n";
+	}
 }
 
+// string input to call on vector input
+void SearchClass::SearchClosest(const std::string& target)
+{
+	SearchClosest(splitStringData(target));
+}
+
+// execute commands from user
 bool SearchClass::ExecuteCommand(const std::string& target)
 {
 	size_t splitter = target.find(" ");
@@ -274,6 +368,7 @@ bool SearchClass::ExecuteCommand(const std::string& target)
 	return false;
 }
 
+// search if sequence exist in source
 bool SearchClass::HasSequence(const std::vector<int>& source, const std::vector<int>& seq)
 {
 	// if search is empty, any data will be valid
@@ -286,15 +381,18 @@ bool SearchClass::HasSequence(const std::vector<int>& source, const std::vector<
 	size_t validLen = source.size() - seq.size();
 	do
 	{
+		// perform search of sequence starting at idx
 		while(matchedElems < elementToMatch && source[idx + matchedElems] == seq[matchedElems])
 		{
 			++matchedElems;
 		}
 		
+		// if loop ended because all element matches, exit
 		if(elementToMatch == matchedElems)
 		{
 			return true;
 		}
+		
 		// reset matching count and go to next element
 		matchedElems = 0;
 		++idx;
@@ -303,8 +401,10 @@ bool SearchClass::HasSequence(const std::vector<int>& source, const std::vector<
 	return false;
 }
 
+// search if all elements in target exist in source
 bool SearchClass::HasUnordered(const std::vector<std::pair<int, size_t> >& source, const std::vector<std::pair<int, size_t> >& target)
 {
+	// early exit if size does not match
 	if(target.size() > source.size())
 		return false;
 
@@ -314,6 +414,7 @@ bool SearchClass::HasUnordered(const std::vector<std::pair<int, size_t> >& sourc
 	size_t sEnd = source.size();
 	size_t tEnd = target.size();
 	
+	// while yet to reach the end and source has at least same amount as target
 	while (tEnd - tIdx <= sEnd - sIdx)
 	{
 		if(target[tIdx].first == source[sIdx].first)
@@ -346,6 +447,7 @@ bool SearchClass::HasUnordered(const std::vector<std::pair<int, size_t> >& sourc
 	return found == tEnd;
 }
 
+// count number of elements that exist from target in source
 size_t SearchClass::MatchElements(const std::vector<std::pair<int, size_t> >& source, const std::vector<std::pair<int, size_t> >& target)
 {
 	size_t tIdx = 0;
@@ -353,24 +455,32 @@ size_t SearchClass::MatchElements(const std::vector<std::pair<int, size_t> >& so
 	size_t tEnd = target.size();
 	size_t sEnd = source.size();
 	size_t result = 0;
+	
+	// while yet to reach the end
 	while(tIdx != tEnd && sIdx != sEnd)
 	{
+		// if matches
 		if(target[tIdx].first == source[sIdx].first)
 		{
+			// increment result base on smallest number of this element that exist
 			result += target[tIdx].second < source[sIdx].second ? target[tIdx].second : source[sIdx].second;
+			// go to next element
 			++tIdx;
 			++sIdx;
 		}
+		// increment target if target is smaller
 		else if( target[tIdx].first < source[sIdx].first)
 		{
 			// source element is greater, go to a smaller element
 			++tIdx;
 		}
+		// increment source as source is smaller
 		else
 		{
 			++sIdx;
 		}
 	}
+	// return found matching number of elements
 	return result;
 }
 
