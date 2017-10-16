@@ -1,0 +1,1 @@
+testUserInput.bat | searchProgram output1.dat
