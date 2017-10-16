@@ -1,0 +1,2 @@
+make searchProgram
+autoTest.bat
