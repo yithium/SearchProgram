@@ -63,15 +63,12 @@ std::vector<int> splitStringData(const std::string& input)
 	// get first value from string
 	if(isstream.good())
 	{
-		isstream >> val;
-	}
-	// get all valid data from string
-	while(isstream.good())
-	{
-		// push previously obtained valid data into vector
-		result.push_back(val);
-		// get data for next iteration
-		isstream >> val;
+		// get all valid data from string
+		while(isstream >> val)
+		{
+			// push previously obtained valid data into vector
+			result.push_back(val);
+		}
 	}
 	
 	return result;
@@ -309,7 +306,7 @@ bool SearchClass::SearchUnordered(const std::string& target)
 }
 
 // print closest result to user input
-void SearchClass::SearchClosest(const std::vector<int>& target)
+bool SearchClass::SearchClosest(const std::vector<int>& target)
 {
 	if(HasData())
 	{
@@ -340,12 +337,14 @@ void SearchClass::SearchClosest(const std::vector<int>& target)
 	{
 		std::cout << "No valid data for operation\n";
 	}
+	// for the sake of being similar to other functions.
+	return true;
 }
 
 // string input to call on vector input
-void SearchClass::SearchClosest(const std::string& target)
+bool SearchClass::SearchClosest(const std::string& target)
 {
-	SearchClosest(splitStringData(target));
+	return SearchClosest(splitStringData(target));
 }
 
 // execute commands from user
@@ -353,19 +352,35 @@ bool SearchClass::ExecuteCommand(const std::string& target)
 {
 	size_t splitter = target.find(" ");
 	std::string command = target.substr(0,splitter);
+	bool result = false;
 	if(command == "searchSequence")
 	{
-		return SearchSequence(target.substr(splitter+1));
+		result = SearchSequence(target.substr(splitter+1));
 	}
 	else if(command == "searchUnordered")
 	{
-		return SearchUnordered(target.substr(splitter+1));
+		result = SearchUnordered(target.substr(splitter+1));
 	}
 	else if(command == "searchClosest")
 	{
-		SearchClosest(target.substr(splitter+1));
+		result = SearchClosest(target.substr(splitter+1));
 	}
-	return false;
+	else
+	{
+		std::cout << "Command '"<< command << "' could not be found\n";
+	}
+	if(!result)
+	{
+		if(target.at(target.size()-1) == '\r')
+		{
+			std::cout << "'" << target.substr(0,target.size()-1) << "' is not found in any row.\n";
+		}
+		else
+		{
+			std::cout << "'" << target << "' is not found in any row.\n";
+		}
+	}
+	return result;
 }
 
 // search if sequence exist in source

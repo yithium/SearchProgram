@@ -26,10 +26,19 @@ int main(int argc, char**argv)
 	while(userInput != "exit")
 	{
 		// *** should operate on get line instead.
-		//std::getline(std::cin,);
-		std::cin >> userInput;
+		std::getline(std::cin, userInput);
+		//std::cin >> userInput;
+		if(userInput.at(userInput.size()-1) == '\r')
+		{
+			userInput = userInput.substr(0,userInput.size()-1);
+		}
+		
+		
 		// execute user command
+		if(userInput == "exit")
+			break;
 		test.ExecuteCommand(userInput);
+		
 	}
 	
 	return 0;

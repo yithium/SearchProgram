@@ -27,8 +27,8 @@ public:
 	bool SearchSequence(const std::string& target);
 	bool SearchUnordered(const std::vector<int>& target);
 	bool SearchUnordered(const std::string& target);
-	void SearchClosest(const std::vector<int>& target);
-	void SearchClosest(const std::string& target);
+	bool SearchClosest(const std::vector<int>& target);
+	bool SearchClosest(const std::string& target);
 	
 	
 	// For executing commands received
