@@ -6,10 +6,10 @@
 int main(int argc, char**argv)
 {
 	// initialize searchClass
-	SearchClass test;
+	SearchClass<int> test;
 	
 	std::cout << "Loading from: " << argv[1] << std::endl;
-	bool result = test.Load(argv[1]);
+	bool result = test.Load(argv[1],"\r\n");
 	
 	// Print result of data file load
 	if(result)

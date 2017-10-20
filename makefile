@@ -1,4 +1,4 @@
-objects = main.o Cryptography.o Container2D.o SearchClass.o
+objects = main.o Cryptography.o
 
 CCFlag = -ansi -pedantic -Werror -Wall 
 
@@ -7,17 +7,11 @@ compile = g++ $(CCFlag)
 searchProgram : $(objects)
 	$(compile) -o searchProgram $(objects) 
 	
-main.o : main.cpp Cryptography.h
+main.o : main.cpp Cryptography.h SearchClass.inl SearchClass.h Container2D.h Container2D.inl
 	$(compile) -c main.cpp
 	
 Cryptography.o : Cryptography.cpp Cryptography.h
 	$(compile) -c Cryptography.cpp  
-
-Container2D.o: Container2D.cpp Container2D.h
-	$(compile) -c Container2D.cpp
-
-SearchClass.o: SearchClass.cpp SearchClass.h
-	$(compile) -c SearchClass.cpp
 
 .PHONY : clean
 clean : 
