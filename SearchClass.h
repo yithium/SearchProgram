@@ -3,18 +3,36 @@
 #include <utility>        // for std::pair
 #include <vector>         // for base container type
 
+enum RESULT
+{
+	FILE_NOT_FOUND,
+	INVALID_FILE_DATA,
+	LOAD_OK,
+	NO_DATA,
+	INPUT_LENGTH_EXCEED,
+	NOT_FOUND,
+	NO_MATCHES,
+	NO_INPUT,
+	FOUND
+};
+
+
 // class with searchSequence, searchUnordered, searchClosest functionality base on loaded data
 // *** to be rewritten to handle any data type
 template <typename DataType>
 class SearchClass
 {
 public:
+	// for result on operation of SearchClass
+
+
+
 	SearchClass();
 	
 	
 	// load 2D data, returns false on failure of loading
-	bool Load(std::string input, std::string lineSplit = "\n");
-	bool Load(const std::vector<std::vector<DataType> >&);
+	RESULT Load(std::string input, std::string lineSplit = "\n");
+	RESULT Load(const std::vector<std::vector<DataType> >&);
 	
 	
 	// Add a row at the end
@@ -24,16 +42,20 @@ public:
 	
 	
 	// search functions base on string or vectors.
-	bool SearchSequence(const std::vector<DataType>& target);
-	bool SearchSequence(const std::string& target);
-	bool SearchUnordered(const std::vector<DataType>& target);
-	bool SearchUnordered(const std::string& target);
-	bool SearchClosest(const std::vector<DataType>& target);
-	bool SearchClosest(const std::string& target);
+	RESULT SearchSequence(const std::vector<DataType>& target);
+	RESULT SearchSequence(const std::string& target);
+	RESULT SearchUnordered(const std::vector<DataType>& target);
+	RESULT SearchUnordered(const std::string& target);
+	RESULT SearchClosest(const std::vector<DataType>& target);
+	RESULT SearchClosest(const std::string& target);
 	
 	
 	// For executing commands received
-	bool ExecuteCommand(const std::string& target);
+	RESULT ExecuteCommand(const std::string& target);
+	
+	
+
+	
 	
 private:
 	// 2D data container

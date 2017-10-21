@@ -8,18 +8,18 @@ int main(int argc, char**argv)
 	// initialize searchClass
 	SearchClass<int> test;
 	
-	std::cout << "Loading from: " << argv[1] << std::endl;
-	bool result = test.Load(argv[1],"\r\n");
-	
+	//std::cout << "Loading from: " << argv[1] << std::endl;
+	test.ExecuteCommand("searchSequence 1 42");
+	test.ExecuteCommand("Load " + std::string(argv[1]));
 	// Print result of data file load
-	if(result)
-	{
-		std::cout << "successfully loaded" << std::endl;
-	}
-	else
-	{
-		std::cout << "failure to load" << std::endl;
-	}
+	//if(result)
+	//{
+	//	std::cout << "successfully loaded" << std::endl;
+	//}
+	//else
+	//{
+	//	std::cout << "failure to load" << std::endl;
+	//}
 	
 	// for getting input from user
 	std::string userInput = "";
