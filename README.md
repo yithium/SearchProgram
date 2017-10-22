@@ -10,8 +10,5 @@ User will input search actions provided base on the Data file they chosed to loa
 * searchUnordered function added
 * searchClosest function added
 * Fix program to work with CLI(command line interface)
-
-# Things needed to be done
-
-* Create additional test data
-* Revamp program design
+* Added indexing of Data Value to reduce search time at the cost of memory
+* Added test data generation script
