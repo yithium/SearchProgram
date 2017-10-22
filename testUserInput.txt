@@ -1,0 +1,13 @@
+searchSequence 82 429 41
+searchSequence 41
+searchSequence 35 190 342
+searchUnordered 38
+searchUnordered 327 327
+searchUnordered 327 327 327
+searchClosest 38
+searchClosest 38 37
+searchClosest 37 38
+searchClosest 38 118
+searchClosest 37 41 38
+searchClosest 37 41 118 462
+exit
