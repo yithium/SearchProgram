@@ -2,7 +2,7 @@
 #include <string>         // for usage interface, size_t
 #include <utility>        // for std::pair
 #include <vector>         // for base container type
-
+#include <map>
 enum RESULT
 {
 	FILE_NOT_FOUND,
@@ -24,9 +24,12 @@ class SearchClass
 {
 public:
 	// for result on operation of SearchClass
-
-
-
+	typedef std::pair<DataType, size_t> DataCounts;
+	typedef std::vector<DataCounts> VecDataCounts;
+	typedef std::pair<size_t, std::vector<size_t> > PairRowColIdxs;
+	typedef std::map<DataType, std::vector<PairRowColIdxs> > MapKeyToRowVec;
+	
+	
 	SearchClass();
 	
 	
@@ -35,8 +38,6 @@ public:
 	RESULT Load(const std::vector<std::vector<DataType> >&);
 	
 	
-	// Add a row at the end
-	bool AddRow(const std::vector<DataType>&);
 	// verify if data available for search
 	bool HasData();
 	
@@ -61,15 +62,16 @@ private:
 	// 2D data container
 	Container2D<DataType> _container;
 	// For reducing search time on searchUnordered and searchClosest at the expense of memory
-	std::vector<std::vector<std::pair<DataType, size_t> > >_compressSorted;
-	
+	std::vector<VecDataCounts>_compressSorted;
+	// For indexing Data and reducing rows to search, and potentially index to search
+	MapKeyToRowVec _dataIdxMap;
 	
 	// compare if source vector contain target vector's sequence
 	bool HasSequence(const std::vector<DataType>& source, const std::vector<DataType>& target);
 	// compare if source vector contains all elements of target vector
-	bool HasUnordered(const std::vector<std::pair<DataType, size_t> >& source, const std::vector<std::pair<DataType, size_t> >& target);
+	bool HasUnordered(const VecDataCounts& source, const VecDataCounts& target);
 	// return number of matching elements in source vector from target vector
-	size_t MatchElements(const std::vector<std::pair<DataType, size_t> >& source, const std::vector<std::pair<DataType, size_t> >& values);
+	size_t MatchElements(const VecDataCounts& source, const VecDataCounts& values);
 	// to print row information.
 	// *** to be made modified to ostream&
 	void PrintRow(size_t idx);
