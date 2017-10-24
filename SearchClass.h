@@ -1,5 +1,6 @@
 /*
-  SearchClass contain three main utilities which operates on a 2D matrix of data.
+  SearchClass extends from SearchInterface as a string command execution
+  It provides three main utilities which operates on a 2D matrix of data.
   The three utilities are Search Sequence, Search Unordered and Search Closest.
   
   SearchSequence will search for a specific subset in each row of the 2D matrix,
@@ -12,23 +13,33 @@
   their order, if more than one row exist with the same number of matching elements, 
   the row with the smallest index of those will be printed.
   
-  On load, it will create an indexing with Data Value as the key, storing all
+  To begin, user will have to first call initialize with the data file path string.
+  It will create an indexing with Data Value as the key, storing all
   the position that they appeared in. Also, for each row, it also creates a 
-  vector of sorted elements with their respective count of appearancein that row.
+  vector of sorted elements with their respective count of appearance in that row.
   
+  User can then interact with the program with ExecuteCommand to use the utilities.
 */
 
 #include "Container2D.h"  // for 2d container
 #include <string>         // for usage interface, size_t
 #include <utility>        // for std::pair
 #include <vector>         // for base container type
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
+
 #include <map>
 #include <set>
-enum RESULT
+#include "SearchInterface.h"
+
+
+
+
+template <typename DataType>
+class SearchClass : public SearchInterface
+{
+enum SEARCH_RESULT
 {
   FILE_NOT_FOUND,
+  INVALID_COMMAND,
   INVALID_FILE_DATA,
   LOAD_OK,
   NO_DATA,
@@ -38,29 +49,24 @@ enum RESULT
   NO_INPUT,
   FOUND
 };
-
-
-
-template <typename DataType>
-class SearchClass
-{
 public:
   // for result on operation of SearchClass
-  typedef std::pair<DataType, size_t>                      DataCounts;
-  typedef std::vector<DataCounts>                          VecDataCounts;
-  typedef std::pair<size_t, std::vector<size_t> >          PairRowColIdxs;
-  typedef std::map<DataType, std::vector<PairRowColIdxs> > MapKeyToRowVec;
-  typedef std::tr1::unordered_set<size_t>                  RowSet;
-  typedef std::map<DataType, RowSet >                      MapKeyRowSet;
+  typedef std::pair<DataType, size_t>                                                 DataCounts;
+  typedef std::vector<DataCounts>                                                     VecDataCounts;
+  typedef std::pair<size_t, std::vector<size_t> >                                     PairRowColIdxs;
+  typedef std::map<DataType, std::vector<PairRowColIdxs> >                            MapKeyToRowVec;
+  typedef SEARCH_RESULT (SearchClass<DataType>::*MemFn)(const std::string&);
+  typedef std::tr1::unordered_map<
+    std::string, MemFn>          CommandMap;
+  //typedef std::tr1::unordered_set<size_t>                             RowSet;
+  //typedef std::map<DataType, RowSet >                                 MapKeyRowSet;
   
   SearchClass();
-  
-  // load 2D data, returns false on failure of loading
-  RESULT Load(std::string input, std::string lineSplit = "\n");
-  RESULT Load(const std::vector<std::vector<DataType> >&);
-  
+  virtual ~SearchClass();
+
+  virtual RESULT Initialize(const std::string& = "");
   // verify if data available for search
-  bool HasData();
+  virtual bool Good();
   
   // For executing commands received
   RESULT ExecuteCommand(const std::string& target);
@@ -70,21 +76,32 @@ public:
   
   
 private:
+
+
+  // Commands Map
+  CommandMap _commandMap;
   // 2D data container
   Container2D<DataType> _container;
   // For reducing search time on searchUnordered and searchClosest at the expense of memory
   std::vector<VecDataCounts>_compressSorted;
   // For indexing Data and reducing rows to search, and potentially index to search
   MapKeyToRowVec _dataIdxMap;
-  MapKeyRowSet _dataRowMap;
+  //MapKeyRowSet _dataRowMap;
+  SearchClass(const SearchClass&);
+  SearchClass& operator=(const SearchClass&);
   
+  
+  // load 2D data, returns false on failure of loading
+  SEARCH_RESULT Load(const std::string& input);
+  SEARCH_RESULT Load(const std::vector<std::vector<DataType> >&);
+  bool HasData();
   // search functions base on string or vectors.
-  RESULT SearchSequence(const std::vector<DataType>& target);
-  RESULT SearchSequence(const std::string& target);
-  RESULT SearchUnordered(const std::vector<DataType>& target);
-  RESULT SearchUnordered(const std::string& target);
-  RESULT SearchClosest(const std::vector<DataType>& target);
-  RESULT SearchClosest(const std::string& target);
+  SEARCH_RESULT SearchSequence(const std::vector<DataType>& target);
+  SEARCH_RESULT SearchSequence(const std::string& target);
+  SEARCH_RESULT SearchUnordered(const std::vector<DataType>& target);
+  SEARCH_RESULT SearchUnordered(const std::string& target);
+  SEARCH_RESULT SearchClosest(const std::vector<DataType>& target);
+  SEARCH_RESULT SearchClosest(const std::string& target);
   
   
   // compare if source vector contain target vector's sequence
@@ -92,7 +109,9 @@ private:
   // compare if source vector contains all elements of target vector
   bool HasUnordered(const VecDataCounts& source, const VecDataCounts& target);
   // return number of matching elements in source vector from target vector
-  size_t MatchElements(const VecDataCounts& source, const VecDataCounts& values);
+  //size_t MatchElements(const VecDataCounts& source, const VecDataCounts& values);
+  
+  RESULT HandleResult(SEARCH_RESULT result, const std::string& target);
   // to print row information.
   // *** to be made modified to ostream&
   void PrintRow(size_t idx);

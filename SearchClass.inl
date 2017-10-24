@@ -45,43 +45,6 @@
 /*** Help functions Begin***/
 /***************************/
 
-inline void HandleResult(RESULT result, const std::string& target)
-{
-
-  switch (result)
-  {
-  case FILE_NOT_FOUND:
-    std::cout << "File not found.\n";
-    break;
-  case INVALID_FILE_DATA:
-    std::cout << "Please ensure data is valid.\n";
-    break;
-  case LOAD_OK:
-    std::cout << "Successfully loaded.\n";
-    break;
-  case NO_DATA:
-    std::cout << "Failed as no data is loaded.\n";
-    break;
-  case INPUT_LENGTH_EXCEED:
-    std::cout << "No result found for '" << target << "' as number of elements greater than data.\n";
-    break;
-  case NOT_FOUND:
-    std::cout << "No result found for '" << target << "'.\n";
-    break;
-  case NO_MATCHES:
-    std::cout << "\nWas returned as no matches in all rows.\n";
-    break;
-  case NO_INPUT:
-    std::cout << "No input was listed skipping\n";
-  case FOUND:
-    std::cout << "End\n";
-    break;
-
-  }
-
-  // leave a line after each user request for easier viewing
-  std::cout << "\n";
-}
 
 // convert input reference to lower case
 inline std::string& toLowerCase(std::string& input)
@@ -200,20 +163,83 @@ std::vector<std::pair<DataType, size_t> > countElem(std::vector<DataType> input)
 /*********************************************************************************************/
 /*********************************************************************************************/
 
+
 // constructor
 template <typename DataType>
-SearchClass<DataType>::SearchClass()
+SearchClass<DataType>::SearchClass() : SearchInterface()
+{
+}
+template <typename DataType>
+SearchClass<DataType>::~SearchClass()
 {
 }
 
+template <typename DataType>
+RESULT SearchClass<DataType>::Initialize(const std::string& input)
+{
+  if(_commandMap.empty())
+  {
+    _commandMap["load"] = &SearchClass<DataType>::Load;
+    _commandMap["searchsequence"] = &SearchClass<DataType>::SearchSequence;
+    _commandMap["searchunordered"] = &SearchClass<DataType>::SearchUnordered;
+    _commandMap["searchclosest"] = &SearchClass<DataType>::SearchClosest;
+  }
+  return ExecuteCommand(input);
+}
+
+
+template <typename DataType>
+bool SearchClass<DataType>::Good()
+{
+  return HasData();
+}
+
+// execute commands from user
+template <typename DataType>
+RESULT SearchClass<DataType>::ExecuteCommand(const std::string& target)
+{
+  
+  size_t splitter = target.find(" ");
+  std::string command = target.substr(0, splitter);
+  command = toLowerCase(command);
+  
+  typename CommandMap::const_iterator it = _commandMap.find(command);
+  SEARCH_RESULT result = NOT_FOUND;
+  if(it != _commandMap.end())
+  {
+    PRINT(std::cout << target << std::endl;)
+    result = (this->*(it->second))(target.substr(splitter + 1));
+  }
+  else
+  {
+    result = INVALID_COMMAND;
+  }
+
+  return HandleResult(result, target);;
+}
+
+/*********************************************************************************************/
+/*********************************************************************************************/
+/******************************* Search class Public functions Ends***************************/
+/*********************************************************************************************/
+/*********************************************************************************************/
+
+
+
+/*********************************************************************************************/
+/*********************************************************************************************/
+/******************************* Search class Private functions Starts************************/
+/*********************************************************************************************/
+/*********************************************************************************************/
+
 // load from data from file
 template <typename DataType>
-RESULT SearchClass<DataType>::Load(std::string input, std::string lineSplit)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::Load(const std::string& input)
 {
   // opening file
   std::ifstream fileStream(input.c_str(), std::ios::binary);
   Cryptography crypto(KEY);
-  RESULT result = FILE_NOT_FOUND;
+  SEARCH_RESULT result = FILE_NOT_FOUND;
   // read data if file opened successfully
   if (fileStream.good())
   {
@@ -239,7 +265,7 @@ RESULT SearchClass<DataType>::Load(std::string input, std::string lineSplit)
     // decrypt data
     fileData = crypto.Decrypt(fileData);
     // split into data into rows
-    std::vector<std::string> vecStr = splitString(fileData, lineSplit);
+    std::vector<std::string> vecStr = splitString(fileData);
     // split data rows into elements
     std::vector<std::vector<DataType> > data2D;
     data2D.reserve(ASSUMESIZE);
@@ -255,10 +281,10 @@ RESULT SearchClass<DataType>::Load(std::string input, std::string lineSplit)
 
 // load container 2d using 2d vector
 template <typename DataType>
-RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& input)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& input)
 {
   // verify number of elements in each row is the same
-  RESULT result = INVALID_FILE_DATA;
+  SEARCH_RESULT result = INVALID_FILE_DATA;
   bool conRes = _container.Load(input);
   // create data for searchUnordered and searchClosest optimization
   if (conRes)
@@ -278,7 +304,7 @@ RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& in
       const std::vector<DataType>& rowRef = _container.GetRow(row_idx);
       for (size_t col_idx = 0; col_idx < rowRef.size(); ++col_idx)
       {
-        // index
+        // index container
         typename MapKeyToRowVec::iterator elemFound = _dataIdxMap.find(rowRef[col_idx]);
         if (elemFound != _dataIdxMap.end())
         {
@@ -290,26 +316,14 @@ RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& in
           }
           else
           {
+            // add index
             elemFound->second.back().second.push_back(col_idx);
           }
         }
         else
         {
-          // key not found in map
-          //std::vector<PairRowColIdxs> temp;
-          //temp.push_back(PairRowColIdxs(row_idx, std::vector<size_t> (1,col_idx)));
+          // key not found in map, add value to map
           _dataIdxMap[rowRef[col_idx]] = std::vector<PairRowColIdxs>(1, PairRowColIdxs(row_idx, std::vector<size_t>(1, col_idx)));
-        }
-        
-        // row set
-        typename MapKeyRowSet::iterator rElemFound = _dataRowMap.find(rowRef[col_idx]);
-        if (rElemFound != _dataRowMap.end())
-        {
-          rElemFound->second.insert(row_idx);
-        }
-        else
-        {
-          _dataRowMap[rowRef[col_idx]] = RowSet(row_idx);
         }
       }
     }
@@ -332,10 +346,10 @@ bool SearchClass<DataType>::HasData()
 
 // return true if found at least one row that match sequence
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target)
 {
   START_LAP
-  RESULT result = NOT_FOUND;
+  SEARCH_RESULT result = NOT_FOUND;
   // ensure user did not try to call on invalid data
   // ends early if number of element exceed size of row
   if (HasData())
@@ -371,13 +385,6 @@ RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target
               }
             }
           }
-          
-          //if (HasSequence(_container.GetRow(iter->second[idx].first), target))
-          //{
-          //  // print row and indicate result found
-          //  PrintRow(iter->second[idx].first);
-          //  result = FOUND;
-          //}
         }
       }
     }
@@ -396,17 +403,17 @@ RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target
 
 // string input to call on vector input
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchSequence(const std::string& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchSequence(const std::string& target)
 {
   return SearchSequence(splitStringData<DataType>(target));
 }
 
 // return true if found at least one row that contain all elements unordered
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& target)
 {
   START_LAP
-  RESULT result = NOT_FOUND;
+  SEARCH_RESULT result = NOT_FOUND;
   // ensure user did not try to call on invalid data
   // ends early if number of element exceed size of row
   if (HasData())
@@ -450,17 +457,17 @@ RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& targe
 
 // string input to call on vector input
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchUnordered(const std::string& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchUnordered(const std::string& target)
 {
   return SearchUnordered(splitStringData<DataType>(target));
 }
 
 // print closest result to user input
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
 {
   START_LAP
-  RESULT result = NO_MATCHES;
+  SEARCH_RESULT result = NO_MATCHES;
   if (HasData())
   {
     if (target.empty())
@@ -500,24 +507,6 @@ RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
           }
         }
       }
-      //for (size_t idx = 0; idx < _container.GetRowNum(); ++idx)
-      //{
-      //  // get number of elements existing in the row
-      //  size_t rowResult = MatchElements(_compressSorted[idx], targetCompressed);
-      //  if (rowResult == target.size())
-      //  {
-      //    // update rowIdx and break from search
-      //    rowIdx = idx;//PrintRow(idx);
-      //    elements = rowResult;
-      //    break;
-      //  }
-      //  else if (rowResult > elements)
-      //  {
-      //    // update best row
-      //    elements = rowResult;
-      //    rowIdx = idx;
-      //  }
-      //}
       //print the best row found
       rowIdx = rowIdx; // prevent error of rowIdx not used when LESSPRINT is defined
       PRINT(PrintRow(rowIdx);)
@@ -537,65 +526,10 @@ RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
 
 // string input to call on vector input
 template <typename DataType>
-RESULT SearchClass<DataType>::SearchClosest(const std::string& target)
+typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchClosest(const std::string& target)
 {
   return SearchClosest(splitStringData<DataType>(target));
 }
-
-
-// execute commands from user
-template <typename DataType>
-RESULT SearchClass<DataType>::ExecuteCommand(const std::string& target)
-{
-  size_t splitter = target.find(" ");
-  std::string command = target.substr(0, splitter);
-  command = toLowerCase(command);
-  RESULT result = NOT_FOUND;
-  if (command == "searchsequence")
-  {
-    PRINT(std::cout << target << std::endl;)
-    result = SearchSequence(target.substr(splitter + 1));
-  }
-  else if (command == "searchunordered")
-  {
-    PRINT(std::cout << target << std::endl;)
-    result = SearchUnordered(target.substr(splitter + 1));
-  }
-  else if (command == "searchclosest")
-  {
-    PRINT(std::cout << target << std::endl;)
-    result = SearchClosest(target.substr(splitter + 1));
-  }
-  else if (command == "load")
-  {
-    PRINT(std::cout << target << std::endl;)
-    result = Load(target.substr(splitter + 1));
-
-  }
-  else
-  {
-    PRINT(std::cout << "Command '" << command << "' could not be found\n";)
-  }
-  // *** Call a function to print result output.
-  PRINT(HandleResult(result, target);)
-
-  return result;
-}
-
-/*********************************************************************************************/
-/*********************************************************************************************/
-/******************************* Search class Public functions Ends***************************/
-/*********************************************************************************************/
-/*********************************************************************************************/
-
-
-
-/*********************************************************************************************/
-/*********************************************************************************************/
-/******************************* Search class Private functions Starts************************/
-/*********************************************************************************************/
-/*********************************************************************************************/
-
 
 // search if sequence exist in source
 template <typename DataType>
@@ -678,41 +612,58 @@ bool SearchClass<DataType>::HasUnordered(const VecDataCounts& source, const VecD
   return found == tEnd;
 }
 
-// count number of elements that exist from target in source
-template <typename DataType>
-size_t SearchClass<DataType>::MatchElements(const VecDataCounts& source, const VecDataCounts& target)
-{
-  size_t tIdx = 0;
-  size_t sIdx = 0;
-  size_t tEnd = target.size();
-  size_t sEnd = source.size();
-  size_t result = 0;
 
-  // while yet to reach the end
-  while (tIdx != tEnd && sIdx != sEnd)
+template<typename DataType>
+RESULT SearchClass<DataType>::HandleResult(
+  typename SearchClass<DataType>::SEARCH_RESULT resultEnum, 
+  const std::string& target
+)
+{
+  RESULT result = EXECUTION_COMMANDNOTFOUND;
+  switch (resultEnum)
   {
-    // if matches
-    if (target[tIdx].first == source[sIdx].first)
-    {
-      // increment result base on smallest number of this element that exist
-      result += target[tIdx].second < source[sIdx].second ? target[tIdx].second : source[sIdx].second;
-      // go to next element
-      ++tIdx;
-      ++sIdx;
-    }
-    // increment target if target is smaller
-    else if (target[tIdx].first < source[sIdx].first)
-    {
-      // source element is greater, go to a smaller element
-      ++tIdx;
-    }
-    // increment source as source is smaller
-    else
-    {
-      ++sIdx;
-    }
+  case FILE_NOT_FOUND:
+    result = EXECUTION_FAIL;
+    std::cout << "File not found.\n";
+    break;
+  case INVALID_COMMAND:
+    result = EXECUTION_COMMANDNOTFOUND;
+    std::cout << "No matching command found for '" << target << "'.\n";
+    break;
+  case INVALID_FILE_DATA:
+    result = EXECUTION_FAIL;
+    std::cout << "Please ensure data is valid.\n";
+    break;
+  case LOAD_OK:
+    result = EXECUTION_OK;
+    std::cout << "Successfully loaded.\n";
+    break;
+  case NO_DATA:
+    result = EXECUTION_FAIL;
+    std::cout << "Failed as no data is loaded.\n";
+    break;
+  case INPUT_LENGTH_EXCEED:
+    result = EXECUTION_FAIL;
+    std::cout << "No result found for '" << target << "' as number of elements greater than data.\n";
+    break;
+  case NOT_FOUND:
+    result = EXECUTION_NOTFOUND;
+    std::cout << "No result found for '" << target << "'.\n";
+    break;
+  case NO_MATCHES:
+    result = EXECUTION_NOTFOUND;
+    std::cout << "\nWas returned as no matches in all rows.\n";
+    break;
+  case NO_INPUT:
+    result = EXECUTION_INVALID;
+    std::cout << "No input was listed skipping\n";
+  case FOUND:
+    result = EXECUTION_OK;
+    std::cout << "End\n";
+    break;
   }
-  // return found matching number of elements
+  // leave a line after each user request for easier viewing
+  std::cout << "\n";
   return result;
 }
 

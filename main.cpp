@@ -35,11 +35,11 @@ int main(int argc, char**argv)
   SETTIME
   if(argc == 2)
   {
-    test.ExecuteCommand("Load " + std::string(argv[1]));
+    test.Initialize("Load " + std::string(argv[1]));
   }
   else
   {
-    while(!test.HasData())
+    while(!test.Good())
     {
       std::string fileName;
       std::cout << "Please specify a data file to load.\n";
