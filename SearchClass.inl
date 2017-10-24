@@ -20,6 +20,27 @@
 #endif
 
 
+#ifdef MEASURESPEED
+  #include <ctime> // for benchmarking
+  #include <iomanip>
+  std::clock_t start;
+  double duration = 0;
+
+  #define START_TIMER            start = std::clock(); \
+                                 duration = 0;
+
+  #define START_LAP              start = std::clock();
+  #define END_LAP                duration += ( std::clock() - start );
+
+  #define PRINTDURATION(message) std::cout << message << ": " << std::setprecision(12) << duration/ (double) CLOCKS_PER_SEC <<'\n';
+#else
+  #define START_TIMER
+  #define START_LAP
+  #define END_LAP
+  #define PRINTDURATION(message)
+#endif
+
+
 /***************************/
 /*** Help functions Begin***/
 /***************************/
@@ -257,8 +278,8 @@ RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& in
       const std::vector<DataType>& rowRef = _container.GetRow(row_idx);
       for (size_t col_idx = 0; col_idx < rowRef.size(); ++col_idx)
       {
+        // index
         typename MapKeyToRowVec::iterator elemFound = _dataIdxMap.find(rowRef[col_idx]);
-
         if (elemFound != _dataIdxMap.end())
         {
           // key found in map
@@ -278,6 +299,17 @@ RESULT SearchClass<DataType>::Load(const std::vector<std::vector<DataType> >& in
           //std::vector<PairRowColIdxs> temp;
           //temp.push_back(PairRowColIdxs(row_idx, std::vector<size_t> (1,col_idx)));
           _dataIdxMap[rowRef[col_idx]] = std::vector<PairRowColIdxs>(1, PairRowColIdxs(row_idx, std::vector<size_t>(1, col_idx)));
+        }
+        
+        // row set
+        typename MapKeyRowSet::iterator rElemFound = _dataRowMap.find(rowRef[col_idx]);
+        if (rElemFound != _dataRowMap.end())
+        {
+          rElemFound->second.insert(row_idx);
+        }
+        else
+        {
+          _dataRowMap[rowRef[col_idx]] = RowSet(row_idx);
         }
       }
     }
@@ -302,6 +334,7 @@ bool SearchClass<DataType>::HasData()
 template <typename DataType>
 RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target)
 {
+  START_LAP
   RESULT result = NOT_FOUND;
   // ensure user did not try to call on invalid data
   // ends early if number of element exceed size of row
@@ -341,9 +374,9 @@ RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target
           
           //if (HasSequence(_container.GetRow(iter->second[idx].first), target))
           //{
-          //	// print row and indicate result found
-          //	PrintRow(iter->second[idx].first);
-          //	result = FOUND;
+          //  // print row and indicate result found
+          //  PrintRow(iter->second[idx].first);
+          //  result = FOUND;
           //}
         }
       }
@@ -357,6 +390,7 @@ RESULT SearchClass<DataType>::SearchSequence(const std::vector<DataType>& target
   {
     result = NO_DATA;
   }
+  END_LAP
   return result;
 }
 
@@ -371,6 +405,7 @@ RESULT SearchClass<DataType>::SearchSequence(const std::string& target)
 template <typename DataType>
 RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& target)
 {
+  START_LAP
   RESULT result = NOT_FOUND;
   // ensure user did not try to call on invalid data
   // ends early if number of element exceed size of row
@@ -391,7 +426,6 @@ RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& targe
       {
         for (size_t idx = 0; idx < iter->second.size(); ++idx)
         {
-
           if (HasUnordered(_compressSorted[iter->second[idx].first], targetCompressed))
           {
             // print row and indicate result found
@@ -410,6 +444,7 @@ RESULT SearchClass<DataType>::SearchUnordered(const std::vector<DataType>& targe
   {
     result = NO_DATA;
   }
+  END_LAP
   return result;
 }
 
@@ -424,6 +459,7 @@ RESULT SearchClass<DataType>::SearchUnordered(const std::string& target)
 template <typename DataType>
 RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
 {
+  START_LAP
   RESULT result = NO_MATCHES;
   if (HasData())
   {
@@ -433,27 +469,55 @@ RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
     }
     else
     {
+      size_t maxElements = target.size();
       size_t elements = 0;
       size_t rowIdx = 0;
       VecDataCounts targetCompressed = countElem<DataType>(target);
-      for (size_t idx = 0; idx < _container.GetRowNum(); ++idx)
+      std::tr1::unordered_map<size_t,size_t> rowElemMap;
+      for (size_t tIdx = 0; tIdx < targetCompressed.size() && maxElements > elements; ++tIdx)
       {
-        // get number of elements existing in the row
-        size_t rowResult = MatchElements(_compressSorted[idx], targetCompressed);
-        if (rowResult == target.size())
+        DataCounts& targValRef = targetCompressed[tIdx];
+        typename MapKeyToRowVec::const_iterator iter = _dataIdxMap.find(targValRef.first);
+        if(iter != _dataIdxMap.end())
         {
-          // update rowIdx and break from search
-          rowIdx = idx;//PrintRow(idx);
-          elements = rowResult;
-          break;
-        }
-        else if (rowResult > elements)
-        {
-          // update best row
-          elements = rowResult;
-          rowIdx = idx;
+          const std::vector<PairRowColIdxs>& valIdxs = iter->second;
+          for(size_t vcIdx = 0; vcIdx < valIdxs.size(); ++vcIdx)
+          {
+            size_t temp = rowElemMap[valIdxs[vcIdx].first] 
+                        = rowElemMap[valIdxs[vcIdx].first] 
+                          + std::min(valIdxs[vcIdx].second.size(), targValRef.second);
+            if(temp == maxElements)
+            {
+              rowIdx = valIdxs[vcIdx].first;
+              elements = temp;
+              break;
+            }
+            if(temp > elements)
+            {
+              elements = temp;
+              rowIdx = valIdxs[vcIdx].first;
+            }
+          }
         }
       }
+      //for (size_t idx = 0; idx < _container.GetRowNum(); ++idx)
+      //{
+      //  // get number of elements existing in the row
+      //  size_t rowResult = MatchElements(_compressSorted[idx], targetCompressed);
+      //  if (rowResult == target.size())
+      //  {
+      //    // update rowIdx and break from search
+      //    rowIdx = idx;//PrintRow(idx);
+      //    elements = rowResult;
+      //    break;
+      //  }
+      //  else if (rowResult > elements)
+      //  {
+      //    // update best row
+      //    elements = rowResult;
+      //    rowIdx = idx;
+      //  }
+      //}
       //print the best row found
       rowIdx = rowIdx; // prevent error of rowIdx not used when LESSPRINT is defined
       PRINT(PrintRow(rowIdx);)
@@ -467,6 +531,7 @@ RESULT SearchClass<DataType>::SearchClosest(const std::vector<DataType>& target)
   {
     result = NO_DATA;
   }
+  END_LAP
   return result;
 }
 

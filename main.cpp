@@ -8,34 +8,33 @@
 #include <string>        // for interfacing with searchClass
 
 
-#include <ctime> // for benchmarking
 
-//
+
+
 #ifdef MEASURESPEED
-  #define CLOCKDEFINE std::clock_t start; \
-                      double duration = 0;
 
-  #define SETTIME start = std::clock();
-  #define GETDURATION duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-  #define PRINTDURATION(message) std::cout << message << ": "<< duration <<'\n';
+  #define CLOCKDEFINE std::clock_t start_program; \
+                      double duration_outer = 0;
+
+  #define SETTIME start_program = std::clock();
+  #define GETDURATION duration_outer = ( std::clock() - start_program ) / (double) CLOCKS_PER_SEC;
+	#define PRINTDURATIONPROG(message) std::cout << message << ": "<< duration_outer <<'\n';
 #else
   #define CLOCKDEFINE
   #define SETTIME
   #define GETDURATION
-  #define PRINTDURATION(message)
+  #define PRINTDURATIONPROG(message)
 #endif
+
 
 int main(int argc, char**argv)
 {
   // initialize searchClass
   SearchClass<int> test;
-  
   CLOCKDEFINE
-  
-  
+  SETTIME
   if(argc == 2)
   {
-    SETTIME
     test.ExecuteCommand("Load " + std::string(argv[1]));
   }
   else
@@ -45,13 +44,11 @@ int main(int argc, char**argv)
       std::string fileName;
       std::cout << "Please specify a data file to load.\n";
       std::cin >> fileName;
-      SETTIME
       test.ExecuteCommand("Load " + fileName);
     }
   }
-  GETDURATION
-  PRINTDURATION("Load Duration")
   std::string userInput = "";
+  
   while(userInput != "exit")
   {
     // *** should operate on get line instead.
@@ -71,8 +68,9 @@ int main(int argc, char**argv)
     test.ExecuteCommand(userInput);
     
   }
-  GETDURATION
-  PRINTDURATION("Execution duration: ")
+	GETDURATION
+  PRINTDURATION("Total function execution")
+	PRINTDURATIONPROG("Total Program execution")
   
   return 0;
 }

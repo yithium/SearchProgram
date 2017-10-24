@@ -9,7 +9,7 @@
 #include <ctime>
 #include <string>
 
-#define RANGE 10000
+#define RANGE 1000
 #define VALUELENGTH 6
 
 int main(int argc, char**argv)

@@ -3,7 +3,7 @@ objectsTimed = mainTimed.o
 objectsMinPrint = mainMinPrint.o
 common = Cryptography.o
 
-CCFlag = -ansi -pedantic -Werror -Wall 
+CCFlag = -std=c++0x -O2 -DNDEBUG -ansi -pedantic -Werror -Wall 
 
 compile = g++ $(CCFlag)
 
@@ -11,10 +11,10 @@ searchProgram : $(objectsUntimed) $(common)
 	$(compile) -o searchProgram $(objectsUntimed) $(common)
 
 searchProgramTimed : $(objectsTimed) $(common)
-	$(compile) -o searchProgram $(objectsTimed) $(common)
+	$(compile) -o searchProgramTimed $(objectsTimed) $(common)
 
 searchProgramMinPrint : $(objectsMinPrint) $(common)
-	$(compile) -o searchProgram $(objectsMinPrint) $(common)
+	$(compile) -o searchProgramMinPrint $(objectsMinPrint) $(common)
 
 main.o : main.cpp SearchClass.inl SearchClass.h Container2D.h Container2D.inl
 	$(compile) -c main.cpp

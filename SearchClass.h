@@ -22,7 +22,10 @@
 #include <string>         // for usage interface, size_t
 #include <utility>        // for std::pair
 #include <vector>         // for base container type
+#include <tr1/unordered_map>
+#include <tr1/unordered_set>
 #include <map>
+#include <set>
 enum RESULT
 {
   FILE_NOT_FOUND,
@@ -43,32 +46,21 @@ class SearchClass
 {
 public:
   // for result on operation of SearchClass
-  typedef std::pair<DataType, size_t> DataCounts;
-  typedef std::vector<DataCounts> VecDataCounts;
-  typedef std::pair<size_t, std::vector<size_t> > PairRowColIdxs;
+  typedef std::pair<DataType, size_t>                      DataCounts;
+  typedef std::vector<DataCounts>                          VecDataCounts;
+  typedef std::pair<size_t, std::vector<size_t> >          PairRowColIdxs;
   typedef std::map<DataType, std::vector<PairRowColIdxs> > MapKeyToRowVec;
-  
+  typedef std::tr1::unordered_set<size_t>                  RowSet;
+  typedef std::map<DataType, RowSet >                      MapKeyRowSet;
   
   SearchClass();
-  
   
   // load 2D data, returns false on failure of loading
   RESULT Load(std::string input, std::string lineSplit = "\n");
   RESULT Load(const std::vector<std::vector<DataType> >&);
   
-  
   // verify if data available for search
   bool HasData();
-  
-  
-  // search functions base on string or vectors.
-  RESULT SearchSequence(const std::vector<DataType>& target);
-  RESULT SearchSequence(const std::string& target);
-  RESULT SearchUnordered(const std::vector<DataType>& target);
-  RESULT SearchUnordered(const std::string& target);
-  RESULT SearchClosest(const std::vector<DataType>& target);
-  RESULT SearchClosest(const std::string& target);
-  
   
   // For executing commands received
   RESULT ExecuteCommand(const std::string& target);
@@ -84,6 +76,16 @@ private:
   std::vector<VecDataCounts>_compressSorted;
   // For indexing Data and reducing rows to search, and potentially index to search
   MapKeyToRowVec _dataIdxMap;
+  MapKeyRowSet _dataRowMap;
+  
+  // search functions base on string or vectors.
+  RESULT SearchSequence(const std::vector<DataType>& target);
+  RESULT SearchSequence(const std::string& target);
+  RESULT SearchUnordered(const std::vector<DataType>& target);
+  RESULT SearchUnordered(const std::string& target);
+  RESULT SearchClosest(const std::vector<DataType>& target);
+  RESULT SearchClosest(const std::string& target);
+  
   
   // compare if source vector contain target vector's sequence
   bool HasSequence(const std::vector<DataType>& source, const std::vector<DataType>& target);

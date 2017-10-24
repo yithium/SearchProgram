@@ -1,10 +1,12 @@
 #!/bin/bash
 
-rows=1000
+rows=10000
 cols=500
-outputfile=NewTestMatrixData
 
-userInputNum=1000
+outputfile=NewTestMatrixData_${rows}_${cols}.dat
+
+
+userInputNum=1000000
 userInputMaxElem=10
 userInputName=NewUserInput
 
@@ -14,8 +16,8 @@ make encrypt
 
 
 
-./generate2D $rows $cols $outputfile
-./encrypt $outputfile unlock
-./inputGen $userInputNum $userInputMaxElem 0 ${userInputName}_sequence.txt
-./inputGen $userInputNum $userInputMaxElem 1 ${userInputName}_unordered.txt
-./inputGen $userInputNum $userInputMaxElem 2 ${userInputName}_closest.txt
+#./generate2D $rows $cols ${outputfile}
+#./encrypt $outputfile unlock
+#./inputGen $userInputNum $userInputMaxElem 0 ${userInputName}_sequence.txt
+#./inputGen $userInputNum $userInputMaxElem 1 ${userInputName}_unordered.txt
+#./inputGen $userInputNum $userInputMaxElem 2 ${userInputName}_closest.txt
