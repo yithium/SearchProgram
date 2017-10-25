@@ -416,7 +416,6 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchUnord
     else if (_container.GetColNum() >= target.size())
     {
       // convert user's input for easier manipulation
-
       VecDataCounts targetCompressed = countElem<DataType>(target);
 
       typename MapKeyToRowVec::const_iterator iter = _dataIdxMap.find(targetCompressed[0].first);

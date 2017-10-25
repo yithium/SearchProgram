@@ -1,4 +1,3 @@
-//#include "Container2D.h"
 
 template <typename DataType>
 Container2D<DataType>::Container2D() : _rows(0), _cols(0)
@@ -47,7 +46,6 @@ bool Container2D<DataType>::AddRow(const std::vector<DataType>& input)
   }
 }
 
-//bool AddCol(const std::string&);
 
 // Get data at row idx starting from 0
 template <typename DataType>
