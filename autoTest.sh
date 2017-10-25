@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./searchProgram sampleData.dat < testUserInput.txt > testResult.txt
-diff testResult.txt sampleData_testUserInput_result.txt
+./searchProgram sampleData.dat < testUserInput.txt > sampleTestOutput.txt
+diff sampleTestOutput.txt sampleData_testUserInput_result.txt > differences.txt

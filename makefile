@@ -1,20 +1,18 @@
 objectsUntimed = main.o
 objectsTimed = mainTimed.o
-objectsMinPrint = mainMinPrint.o
 common = Cryptography.o
 
 CCFlag = -std=c++0x -O2 -DNDEBUG -ansi -pedantic -Werror -Wall 
 
 compile = g++ $(CCFlag)
 
+#basic version
 searchProgram : $(objectsUntimed) $(common)
 	$(compile) -o searchProgram $(objectsUntimed) $(common)
 
+#measures time taken while printing as per normal
 searchProgramTimed : $(objectsTimed) $(common)
 	$(compile) -o searchProgramTimed $(objectsTimed) $(common)
-
-searchProgramMinPrint : $(objectsMinPrint) $(common)
-	$(compile) -o searchProgramMinPrint $(objectsMinPrint) $(common)
 
 main.o : main.cpp SearchClass.inl SearchClass.h Container2D.h Container2D.inl
 	$(compile) -c main.cpp
@@ -22,13 +20,10 @@ main.o : main.cpp SearchClass.inl SearchClass.h Container2D.h Container2D.inl
 mainTimed.o : main.cpp SearchClass.inl SearchClass.h Container2D.h Container2D.inl
 	$(compile) -DMEASURESPEED -c main.cpp -o mainTimed.o
 
-mainMinPrint.o : main.cpp SearchClass.inl SearchClass.h Container2D.h Container2D.inl
-	$(compile) -DLESSPRINT -DMEASURESPEED -c main.cpp -o mainMinPrint.o
 
 Cryptography.o : Cryptography.cpp Cryptography.h
 	$(compile) -c Cryptography.cpp  
 
-	
 	
 encrypt: EncryptProgram.cpp Cryptography.cpp Cryptography.h
 	g++ EncryptProgram.cpp Cryptography.cpp -o encrypt
@@ -47,4 +42,3 @@ clean :
 cleanall : 
 	-rm $(objectsUntimed) $(objectsTimed) $(objectsMinPrint) $(common) \
 	searchProgram searchProgramTimed searchProgramMinPrint encrypt inputGen generate2D
-#-rm $(objects) searchProgram searchProgramTimed searchProgramMinPrint

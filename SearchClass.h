@@ -28,13 +28,20 @@
 
 #include <map>
 #include <set>
-#include "SearchInterface.h"
+#include <tr1/unordered_map>
 
-
+enum RESULT
+{
+  EXECUTION_OK,
+  EXECUTION_NOTFOUND,
+  EXECUTION_FAIL,
+  EXECUTION_INVALID,
+  EXECUTION_COMMANDNOTFOUND
+};
 
 
 template <typename DataType>
-class SearchClass : public SearchInterface
+class SearchClass 
 {
 enum SEARCH_RESULT
 {
@@ -51,22 +58,19 @@ enum SEARCH_RESULT
 };
 public:
   // for result on operation of SearchClass
-  typedef std::pair<DataType, size_t>                                                 DataCounts;
-  typedef std::vector<DataCounts>                                                     VecDataCounts;
-  typedef std::pair<size_t, std::vector<size_t> >                                     PairRowColIdxs;
-  typedef std::map<DataType, std::vector<PairRowColIdxs> >                            MapKeyToRowVec;
+  typedef std::pair<DataType, size_t> DataCounts;
+  typedef std::vector<DataCounts> VecDataCounts;
+  typedef std::pair<size_t, std::vector<size_t> > PairRowColIdxs;
+  typedef std::tr1::unordered_map<DataType, std::vector<PairRowColIdxs> > MapKeyToRowVec;
   typedef SEARCH_RESULT (SearchClass<DataType>::*MemFn)(const std::string&);
-  typedef std::tr1::unordered_map<
-    std::string, MemFn>          CommandMap;
-  //typedef std::tr1::unordered_set<size_t>                             RowSet;
-  //typedef std::map<DataType, RowSet >                                 MapKeyRowSet;
+  typedef std::tr1::unordered_map<std::string, MemFn> CommandMap;
   
   SearchClass();
-  virtual ~SearchClass();
+  ~SearchClass();
 
-  virtual RESULT Initialize(const std::string& = "");
+  RESULT Initialize(const std::string& = "");
   // verify if data available for search
-  virtual bool Good();
+  bool Good();
   
   // For executing commands received
   RESULT ExecuteCommand(const std::string& target);
@@ -75,10 +79,8 @@ public:
 
   
   
-private:
+protected:
 
-
-  // Commands Map
   CommandMap _commandMap;
   // 2D data container
   Container2D<DataType> _container;
@@ -86,9 +88,7 @@ private:
   std::vector<VecDataCounts>_compressSorted;
   // For indexing Data and reducing rows to search, and potentially index to search
   MapKeyToRowVec _dataIdxMap;
-  //MapKeyRowSet _dataRowMap;
-  SearchClass(const SearchClass&);
-  SearchClass& operator=(const SearchClass&);
+
   
   
   // load 2D data, returns false on failure of loading
@@ -103,7 +103,6 @@ private:
   SEARCH_RESULT SearchClosest(const std::vector<DataType>& target);
   SEARCH_RESULT SearchClosest(const std::string& target);
   
-  
   // compare if source vector contain target vector's sequence
   bool HasSequence(const std::vector<DataType>& source, const std::vector<DataType>& target);
   // compare if source vector contains all elements of target vector
@@ -115,6 +114,10 @@ private:
   // to print row information.
   // *** to be made modified to ostream&
   void PrintRow(size_t idx);
+private:
+  
+  SearchClass(const SearchClass&);
+  SearchClass& operator=(const SearchClass&);
 };
 
 #include "SearchClass.inl"

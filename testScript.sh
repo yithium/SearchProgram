@@ -3,7 +3,8 @@
 INPUT1=$1
 MAKEPROGRAM=searchProgram$INPUT1
 
-make $MAKEPROGRAM #searchProgramMinPrint
+
+make $MAKEPROGRAM
 ./autoTest.sh
 
 

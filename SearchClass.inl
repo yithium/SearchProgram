@@ -1,6 +1,5 @@
 
 
-//#include "SearchClass.h"   // SearchClass declaration
 #include "Cryptography.h"  // Encryption/Decryption operation
 #include <iostream>        // std::cout for printing operation results
 #include <fstream>         // for reading data file
@@ -12,12 +11,6 @@
 #define KEY "unlock"       // encryption/decryption key
 #define BUFFERSIZE 1000    // assumed buffer size
 #define ASSUMESIZE 10      // defaulted vector reserve size, to reduce number of allocation due to no reserve
-
-#ifdef LESSPRINT
-  #define PRINT(actions)
-#else
-  #define PRINT(actions) actions
-#endif
 
 
 #ifdef MEASURESPEED
@@ -32,12 +25,12 @@
   #define START_LAP              start = std::clock();
   #define END_LAP                duration += ( std::clock() - start );
 
-  #define PRINTDURATION(message) std::cout << message << ": " << std::setprecision(12) << duration/ (double) CLOCKS_PER_SEC <<'\n';
+  #define PRINT_DURATION(message) std::cout << message << ": " << std::setprecision(12) << duration/ (double) CLOCKS_PER_SEC <<'\n';
 #else
   #define START_TIMER
   #define START_LAP
   #define END_LAP
-  #define PRINTDURATION(message)
+  #define PRINT_DURATION(message)
 #endif
 
 
@@ -73,12 +66,12 @@ inline std::vector<std::string> splitString(const std::string& input, std::strin
     ePos = input.find(delimiter, sPos);
     // push string to be split into result vector
     result.push_back(
-      ePos == std::string::npos          //
-      ? input.substr(sPos)             // push back remaining string if reached end of string
-      : input.substr(sPos, ePos - sPos) // push back sub string found
+      ePos == std::string::npos                 //
+              ? input.substr(sPos)              // push back remaining string if reached end of string
+              : input.substr(sPos, ePos - sPos) // push back sub string found
       );
 
-    sPos = ePos + delimiter.length();    // update start position to after delimiter found
+    sPos = ePos + delimiter.length();           // update start position to after delimiter found
   }
 
   // remove empty string created by potential different input string format
@@ -121,9 +114,7 @@ std::vector<std::pair<DataType, size_t> > countElem(std::vector<DataType> input)
   std::vector<std::pair<DataType, size_t> > result;
   result.reserve(input.size());
 
-  std::sort(input.begin(),
-    input.end()
-    );
+  std::sort(input.begin(), input.end());
 
   // combine sorted data
   DataType curElem = input[0];
@@ -164,9 +155,8 @@ std::vector<std::pair<DataType, size_t> > countElem(std::vector<DataType> input)
 /*********************************************************************************************/
 
 
-// constructor
 template <typename DataType>
-SearchClass<DataType>::SearchClass() : SearchInterface()
+SearchClass<DataType>::SearchClass()
 {
 }
 template <typename DataType>
@@ -207,7 +197,7 @@ RESULT SearchClass<DataType>::ExecuteCommand(const std::string& target)
   SEARCH_RESULT result = NOT_FOUND;
   if(it != _commandMap.end())
   {
-    PRINT(std::cout << target << std::endl;)
+    std::cout << target << std::endl;
     result = (this->*(it->second))(target.substr(splitter + 1));
   }
   else
@@ -363,6 +353,7 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchSeque
       typename MapKeyToRowVec::const_iterator iter = _dataIdxMap.find(target[0]);
       if (iter != _dataIdxMap.end())
       {
+        // iterate through index of key value user first input
         for (size_t idx = 0; idx < iter->second.size(); ++idx)
         {
           // get row references and indexes in current row
@@ -379,7 +370,7 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchSeque
               if (HasSequence(subRow, target))
               {
                 // print row and indicate result found
-                PRINT(PrintRow(iter->second[idx].first);)
+                PrintRow(iter->second[idx].first);
                 result = FOUND;
                 break;
               }
@@ -431,12 +422,13 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchUnord
       typename MapKeyToRowVec::const_iterator iter = _dataIdxMap.find(targetCompressed[0].first);
       if (iter != _dataIdxMap.end())
       {
+        // go through rows where value exist
         for (size_t idx = 0; idx < iter->second.size(); ++idx)
         {
           if (HasUnordered(_compressSorted[iter->second[idx].first], targetCompressed))
           {
             // print row and indicate result found
-            PRINT(PrintRow(iter->second[idx].first);)
+            PrintRow(iter->second[idx].first);
             result = FOUND;
           }
         }
@@ -481,6 +473,7 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchClose
       size_t rowIdx = 0;
       VecDataCounts targetCompressed = countElem<DataType>(target);
       std::tr1::unordered_map<size_t,size_t> rowElemMap;
+      // add row element value referencing user input
       for (size_t tIdx = 0; tIdx < targetCompressed.size() && maxElements > elements; ++tIdx)
       {
         DataCounts& targValRef = targetCompressed[tIdx];
@@ -490,6 +483,7 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchClose
           const std::vector<PairRowColIdxs>& valIdxs = iter->second;
           for(size_t vcIdx = 0; vcIdx < valIdxs.size(); ++vcIdx)
           {
+            // add element count to map and check if updated value is equals to user's element
             size_t temp = rowElemMap[valIdxs[vcIdx].first] 
                         = rowElemMap[valIdxs[vcIdx].first] 
                           + std::min(valIdxs[vcIdx].second.size(), targValRef.second);
@@ -509,7 +503,7 @@ typename SearchClass<DataType>::SEARCH_RESULT SearchClass<DataType>::SearchClose
       }
       //print the best row found
       rowIdx = rowIdx; // prevent error of rowIdx not used when LESSPRINT is defined
-      PRINT(PrintRow(rowIdx);)
+      PrintRow(rowIdx);
       if (elements != 0)
       {
         result = FOUND;
@@ -652,7 +646,7 @@ RESULT SearchClass<DataType>::HandleResult(
     break;
   case NO_MATCHES:
     result = EXECUTION_NOTFOUND;
-    std::cout << "\nWas returned as no matches in all rows.\n";
+    std::cout << "Was returned as no matches in all rows.\n";
     break;
   case NO_INPUT:
     result = EXECUTION_INVALID;

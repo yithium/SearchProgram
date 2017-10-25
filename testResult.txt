@@ -12,6 +12,9 @@ Row 9: 444 439 126 323 37 38 118 82 429 41
 Row 10: 444 439 126 323 37 38 118 82 429 41 
 End
 
+searchSequence 45 41
+No result found for 'searchSequence 45 41'.
+
 searchSequence 35 190 342
 Row 6: 316 35 190 342 288 106 40 442 264 148 
 End
@@ -22,12 +25,35 @@ Row 9: 444 439 126 323 37 38 118 82 429 41
 Row 10: 444 439 126 323 37 38 118 82 429 41 
 End
 
+searchUnordered 38 37
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+Row 10: 444 439 126 323 37 38 118 82 429 41 
+End
+
+searchUnordered 37 38
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+Row 10: 444 439 126 323 37 38 118 82 429 41 
+End
+
+searchUnordered 41 82
+Row 9: 444 439 126 323 37 38 118 82 429 41 
+Row 10: 444 439 126 323 37 38 118 82 429 41 
+End
+
+searchUnordered 82 44
+No result found for 'searchUnordered 82 44'.
+
 searchUnordered 327 327
 Row 1: 205 145 281 327 461 491 495 442 327 436 
 End
 
 searchUnordered 327 327 327
 No result found for 'searchUnordered 327 327 327'.
+
+searchClosest 46
+Row 0: 41 467 334 0 169 224 478 358 462 118 
+
+Was returned as no matches in all rows.
 
 searchClosest 38
 Row 3: 447 226 271 38 369 412 167 299 35 394 

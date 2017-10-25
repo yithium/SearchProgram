@@ -17,13 +17,13 @@
                       double duration_outer = 0;
 
   #define SETTIME start_program = std::clock();
-  #define GETDURATION duration_outer = ( std::clock() - start_program ) / (double) CLOCKS_PER_SEC;
-	#define PRINTDURATIONPROG(message) std::cout << message << ": "<< duration_outer <<'\n';
+  #define GET_DURATION duration_outer = ( std::clock() - start_program ) / (double) CLOCKS_PER_SEC;
+  #define PRINT_DURATIONPROG(message) std::cout << message << ": "<< duration_outer <<'\n';
 #else
   #define CLOCKDEFINE
   #define SETTIME
-  #define GETDURATION
-  #define PRINTDURATIONPROG(message)
+  #define GET_DURATION
+  #define PRINT_DURATIONPROG(message)
 #endif
 
 
@@ -48,29 +48,23 @@ int main(int argc, char**argv)
     }
   }
   std::string userInput = "";
-  
+  std::getline(std::cin, userInput);
+  if(userInput.at(userInput.size()-1) == '\r')
+  {
+    userInput = userInput.substr(0,userInput.size()-1);
+  }
   while(userInput != "exit")
   {
-    // *** should operate on get line instead.
+    test.ExecuteCommand(userInput);
     std::getline(std::cin, userInput);
-    //std::cin >> userInput;
     if(userInput.at(userInput.size()-1) == '\r')
     {
       userInput = userInput.substr(0,userInput.size()-1);
     }
-    
-    
-    // execute user command
-    if(userInput == "exit")
-    {
-      break;
-    }
-    test.ExecuteCommand(userInput);
-    
   }
-	GETDURATION
-  PRINTDURATION("Total function execution")
-	PRINTDURATIONPROG("Total Program execution")
+  GET_DURATION
+  PRINT_DURATION("Total function execution")
+  PRINT_DURATIONPROG("Total Program execution")
   
   return 0;
 }
